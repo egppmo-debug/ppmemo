@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Modern Memo - 세련되고 스마트한 메모앱</title>
+  
+  <!-- FOUC 방지 및 초기 테마 적용 인라인 스크립트 -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('memo-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      if (meta) meta.content = theme;
+    })();
+  </script>
+
+  <!-- 구글 폰트: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <script type="module" crossorigin src="/assets/index-ByHAhJNC.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BC2FFrfp.css">
+</head>
+<body>
+  <!-- 배경 데코레이션 블러 구체 -->
+  <div class="ambient-glow glow-1" aria-hidden="true"></div>
+  <div class="ambient-glow glow-2" aria-hidden="true"></div>
+
+  <div class="app-container">
+    <!-- 헤더 영역 -->
+    <header class="app-header">
+      <div class="logo-group">
+        <div class="logo-icon-wrap">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z" />
+            <path d="M15 3v6h6" />
+            <path d="M9 13h6" />
+            <path d="M9 17h4" />
+          </svg>
+        </div>
+        <div class="logo-text-wrap">
+          <div class="logo-title-row">
+            <h1 class="logo-title">Memo<span>Hub</span></h1>
+            <span class="cloud-status-badge connecting" id="cloudStatusBadge" title="Firebase 클라우드 동기화 상태">
+              <span class="status-dot"></span>
+              <span class="status-text" id="cloudStatusText">연결 중...</span>
+            </span>
+          </div>
+          <p class="logo-subtitle">아이디어와 할 일을 스마트하게 정리하세요</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- 데이터 백업/복원 메뉴 드롭다운 트리거 -->
+        <div class="dropdown-wrapper">
+          <button type="button" class="btn btn-ghost btn-icon" id="btnMenu" title="데이터 관리 (내보내기/가져오기)" aria-label="메뉴 열기">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+          <div class="dropdown-menu" id="menuDropdown">
+            <button type="button" class="dropdown-item" id="btnExportJson">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>메모 백업 (JSON 다운로드)</span>
+            </button>
+            <button type="button" class="dropdown-item" id="btnImportJson">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>메모 복원 (JSON 가져오기)</span>
+            </button>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item text-danger" id="btnClearAll">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>전체 메모 삭제</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 다크/라이트 테마 토글 버튼 -->
+        <button type="button" class="btn btn-ghost btn-icon theme-toggle-btn" id="themeToggleBtn" title="테마 변경 (다크/라이트)" aria-label="테마 변경">
+          <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <!-- 로그인 버튼 / 사용자 프로필 -->
+        <div class="auth-status-container">
+          <button type="button" class="btn btn-secondary btn-login-trigger" id="btnLoginTrigger">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+            <span>로그인</span>
+          </button>
+
+          <div class="user-profile-wrapper" id="userProfileWrapper" style="display: none;">
+            <button type="button" class="user-avatar-btn" id="userAvatarBtn" title="계정 관리" aria-label="계정 관리">
+              <img id="userAvatarImg" class="user-avatar-img" src="" alt="프로필" style="display: none;">
+              <span id="userAvatarInitial" class="user-avatar-initial">U</span>
+            </button>
+            <div class="user-profile-dropdown" id="userProfileDropdown">
+              <div class="user-dropdown-header">
+                <div class="user-name" id="userDisplayName">사용자</div>
+                <div class="user-email" id="userDisplayEmail">user@example.com</div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="user-dropdown-stats">
+                <span>내 클라우드 메모</span>
+                <strong id="userMemoCount">0개</strong>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button type="button" class="dropdown-item text-danger" id="btnLogout">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>로그아웃</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 새 메모 작성 버튼 -->
+        <button type="button" class="btn btn-primary" id="btnNewMemo">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>새 메모</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 검색 및 필터링 컨트롤 툴바 -->
+    <section class="control-panel">
+      <!-- 검색창 -->
+      <div class="search-box-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="메모 제목이나 내용 검색..." autocomplete="off">
+        <kbd class="search-hint" id="searchKbdHint">/</kbd>
+        <button type="button" class="btn-clear-search" id="btnClearSearch" title="검색어 지우기" aria-label="검색어 지우기" style="display: none;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 뷰 모드 및 정렬 컨트롤 -->
+      <div class="view-sort-controls">
+        <!-- 정렬 선택 -->
+        <div class="select-wrapper">
+          <select id="sortSelect" class="custom-select" aria-label="메모 정렬 기준">
+            <option value="updated-desc">최근 수정순</option>
+            <option value="created-desc">최근 생성순</option>
+            <option value="created-asc">오래된 순</option>
+            <option value="title-asc">제목 (가나다순)</option>
+          </select>
+        </div>
+
+        <!-- 그리드 / 리스트 뷰 토글 -->
+        <div class="view-toggle-group" role="group" aria-label="보기 형태 선택">
+          <button type="button" class="view-toggle-btn active" id="btnGridView" title="그리드 뷰">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </button>
+          <button type="button" class="view-toggle-btn" id="btnListView" title="리스트 뷰">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 카테고리 필터 탭 -->
+    <nav class="category-nav" aria-label="메모 카테고리">
+      <div class="category-scroll-container">
+        <button type="button" class="category-pill active" data-category="all">
+          <span class="pill-dot"></span>
+          <span>전체</span>
+          <span class="pill-count" id="count-all">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="pinned">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6l.8.8.8-.8v-6H18v-2l-2-2z"/>
+          </svg>
+          <span>고정됨</span>
+          <span class="pill-count" id="count-pinned">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="work">
+          <span class="pill-badge badge-work"></span>
+          <span>업무</span>
+          <span class="pill-count" id="count-work">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="personal">
+          <span class="pill-badge badge-personal"></span>
+          <span>개인</span>
+          <span class="pill-count" id="count-personal">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="idea">
+          <span class="pill-badge badge-idea"></span>
+          <span>아이디어</span>
+          <span class="pill-count" id="count-idea">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="todo">
+          <span class="pill-badge badge-todo"></span>
+          <span>할 일</span>
+          <span class="pill-count" id="count-todo">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="study">
+          <span class="pill-badge badge-study"></span>
+          <span>공부</span>
+          <span class="pill-count" id="count-study">0</span>
+        </button>
+        <button type="button" class="category-pill" data-category="trash">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>휴지통</span>
+          <span class="pill-count" id="count-trash">0</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- 메인 메모 피드 영역 -->
+    <main class="memo-main">
+      <!-- 로그인 전 웰컴 안내 히어로 카드 (로그인 안 된 경우 표시) -->
+      <div class="guest-welcome-hero" id="guestWelcomeHero" style="display: none;">
+        <div class="hero-sparkle-icon">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </div>
+        <h2 class="hero-title">나만의 클라우드 메모를 시작하세요</h2>
+        <p class="hero-desc">
+          MemoHub에 로그인하면 작성한 모든 메모가 클라우드에 안전하게 보관되며,<br>
+          스마트폰, 태블릿, PC 어디서든 실시간으로 동기화됩니다.
+        </p>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary btn-hero-login" id="btnHeroLogin">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+            <span>3초 만에 로그인 / 시작하기</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-hero-guest" id="btnHeroGuest">
+            <span>게스트로 먼저 둘러보기</span>
+          </button>
+        </div>
+      </div>
+      <!-- 상단 고정 메모 섹션 (고정된 메모가 있을 때 표시) -->
+      <section class="memo-section" id="pinnedSection" style="display: none;">
+        <div class="section-title-wrap">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="section-icon">
+            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6l.8.8.8-.8v-6H18v-2l-2-2z"/>
+          </svg>
+          <h2 class="section-title">상단 고정된 메모</h2>
+          <span class="section-badge" id="pinnedCountBadge">0</span>
+        </div>
+        <div class="memos-container grid-view" id="pinnedContainer"></div>
+      </section>
+
+      <!-- 일반 메모 섹션 -->
+      <section class="memo-section" id="generalSection">
+        <div class="section-title-wrap" id="generalTitleWrap" style="display: none;">
+          <h2 class="section-title" id="generalSectionTitle">일반 메모</h2>
+          <span class="section-badge" id="generalCountBadge">0</span>
+        </div>
+        <div class="memos-container grid-view" id="memoContainer"></div>
+      </section>
+
+      <!-- 검색 결과 또는 메모 없음 비어있는 화면 (Empty State) -->
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-illustration">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <h3 class="empty-title" id="emptyTitle">작성된 메모가 없습니다</h3>
+        <p class="empty-desc" id="emptyDesc">새로운 아이디어나 오늘 할 일을 첫 번째 메모로 남겨보세요!</p>
+        <button type="button" class="btn btn-primary" id="btnEmptyCreate">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>첫 메모 작성하기</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- 모바일/플로팅 추가 버튼 -->
+    <button type="button" class="fab-btn" id="fabBtn" title="새 메모 작성" aria-label="새 메모 작성">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 메모 작성 / 수정 모달 다이얼로그 (HTML5 <dialog closedby="any"> 표준 준수) -->
+  <dialog id="memoModal" class="custom-dialog" closedby="any" aria-labelledby="modalTitle">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <div class="header-left">
+          <button type="button" class="pin-toggle-btn" id="modalPinBtn" title="상단 고정 토글" aria-label="상단 고정">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6l.8.8.8-.8v-6H18v-2l-2-2z"/>
+            </svg>
+          </button>
+          <h2 id="modalTitle" class="dialog-title">새 메모 작성</h2>
+        </div>
+        <button type="button" class="btn-close-dialog" id="modalCloseBtn" aria-label="닫기">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="memoForm" class="dialog-form" onsubmit="return false;">
+        <input type="hidden" id="editMemoId" value="">
+
+        <!-- 제목 입력 -->
+        <div class="form-group">
+          <input type="text" id="memoTitleInput" class="memo-title-input" placeholder="제목을 입력하세요..." maxlength="100" autocomplete="off" required>
+        </div>
+
+        <!-- 옵션 바: 카테고리 & 컬러 선택 -->
+        <div class="form-options-bar">
+          <!-- 카테고리 선택 -->
+          <div class="option-item">
+            <label for="memoCategorySelect" class="option-label">카테고리</label>
+            <select id="memoCategorySelect" class="option-select">
+              <option value="work">💼 업무</option>
+              <option value="personal">👤 개인</option>
+              <option value="idea">💡 아이디어</option>
+              <option value="todo">✅ 할 일</option>
+              <option value="study">📚 공부</option>
+            </select>
+          </div>
+
+          <!-- 컬러 테마 선택기 -->
+          <div class="option-item">
+            <span class="option-label">카드 색상</span>
+            <div class="color-palette" id="colorPalette" role="radiogroup" aria-label="메모 색상 선택">
+              <button type="button" class="color-dot color-default active" data-color="default" title="기본" aria-label="기본 색상"></button>
+              <button type="button" class="color-dot color-lavender" data-color="lavender" title="라벤더" aria-label="라벤더 색상"></button>
+              <button type="button" class="color-dot color-mint" data-color="mint" title="민트" aria-label="민트 색상"></button>
+              <button type="button" class="color-dot color-peach" data-color="peach" title="피치" aria-label="피치 색상"></button>
+              <button type="button" class="color-dot color-sky" data-color="sky" title="스카이" aria-label="스카이 색상"></button>
+              <button type="button" class="color-dot color-amber" data-color="amber" title="앰버" aria-label="앰버 색상"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 빠른 서식 툴바 -->
+        <div class="editor-toolbar" role="toolbar" aria-label="텍스트 서식 툴바">
+          <button type="button" class="toolbar-btn" data-action="bold" title="굵게 (**텍스트**)">
+            <strong>B</strong>
+          </button>
+          <button type="button" class="toolbar-btn" data-action="italic" title="기울임 (*텍스트*)">
+            <em>I</em>
+          </button>
+          <button type="button" class="toolbar-btn" data-action="heading" title="제목 (# 제목)">
+            H
+          </button>
+          <div class="toolbar-divider"></div>
+          <button type="button" class="toolbar-btn" data-action="todo" title="체크박스 목록 추가 (- [ ])">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="5" width="6" height="6" rx="1"></rect>
+              <line x1="13" y1="8" x2="20" y2="8"></line>
+              <line x1="13" y1="16" x2="20" y2="16"></line>
+              <rect x="3" y="13" width="6" height="6" rx="1"></rect>
+            </svg>
+          </button>
+          <button type="button" class="toolbar-btn" data-action="bullet" title="글머리 기호 (- 목록)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <circle cx="4" cy="6" r="1.5" fill="currentColor"></circle>
+              <circle cx="4" cy="12" r="1.5" fill="currentColor"></circle>
+              <circle cx="4" cy="18" r="1.5" fill="currentColor"></circle>
+            </svg>
+          </button>
+          <button type="button" class="toolbar-btn" data-action="code" title="코드 블록 (`코드`)">
+            &lt;/&gt;
+          </button>
+        </div>
+
+        <div class="date-insert-tools" aria-label="본문 날짜 입력">
+          <button type="button" class="date-insert-btn" id="btnInsertToday" title="오늘 날짜를 본문에 삽입">
+            오늘 날짜
+          </button>
+          <input type="date" id="dateInput" class="date-input" aria-label="삽입할 날짜 선택">
+          <button type="button" class="date-insert-btn" id="btnInsertSelectedDate" title="선택한 날짜를 본문에 삽입">
+            날짜 삽입
+          </button>
+        </div>
+
+        <!-- 본문 텍스트 영역 -->
+        <div class="form-group content-form-group">
+          <textarea id="memoContentInput" class="memo-content-input" placeholder="내용을 입력하세요... (마크다운 및 체크리스트 - [ ] 지원)" rows="9" required></textarea>
+        </div>
+
+        <!-- 모달 하단 정보 및 저장 버튼 -->
+        <div class="dialog-footer">
+          <div class="meta-info">
+            <span id="charWordCount">0자</span>
+            <span class="meta-separator">•</span>
+            <span id="modalDateInfo">작성 중...</span>
+          </div>
+          <div class="footer-buttons">
+            <button type="button" class="btn btn-secondary" id="btnCancelModal">취소</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveModal">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>저장하기</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 삭제 확인 모달 -->
+  <dialog id="deleteModal" class="custom-dialog confirm-dialog" closedby="any" aria-labelledby="deleteTitle">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2 id="deleteTitle" class="dialog-title text-danger">메모 삭제</h2>
+        <button type="button" class="btn-close-dialog" id="deleteCloseBtn" aria-label="닫기">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="confirm-message">선택한 메모를 정말로 삭제하시겠습니까?<br><span class="text-muted">삭제 후에도 즉시 실행 취소(Undo)할 수 있습니다.</span></p>
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelDelete">취소</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmDelete">삭제하기</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 로그인 / 회원가입 모달 -->
+  <dialog id="authModal" class="custom-dialog auth-dialog" closedby="any" aria-labelledby="authModalTitle">
+    <div class="dialog-content auth-dialog-content">
+      <div class="dialog-header">
+        <h2 id="authModalTitle" class="dialog-title">로그인</h2>
+        <button type="button" class="btn-close-dialog" id="authCloseBtn" aria-label="닫기">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="auth-dialog-subtitle">로그인하면 나만의 메모를 안전하게 클라우드에 보관하고 어디서든 이용할 수 있습니다.</p>
+
+      <!-- Google 로그인 버튼 -->
+      <button type="button" class="btn-google-login" id="btnGoogleLogin">
+        <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+        </svg>
+        <span>Google 계정으로 계속하기</span>
+      </button>
+
+      <div class="auth-divider">
+        <span>또는 이메일로 계속하기</span>
+      </div>
+
+      <!-- 탭 전환 (로그인 / 회원가입) -->
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="tabLogin" role="tab" aria-selected="true">로그인</button>
+        <button type="button" class="auth-tab" id="tabSignup" role="tab" aria-selected="false">회원가입</button>
+      </div>
+
+      <!-- 이메일 로그인/회원가입 폼 -->
+      <form id="authForm" class="auth-form" onsubmit="return false;">
+        <!-- 에러 메시지 알림 -->
+        <div class="auth-error-alert" id="authErrorAlert" style="display: none;"></div>
+
+        <div class="form-group">
+          <label for="authEmail" class="auth-label">이메일</label>
+          <input type="email" id="authEmail" class="auth-input" placeholder="example@email.com" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="authPassword" class="auth-label">비밀번호</label>
+          <input type="password" id="authPassword" class="auth-input" placeholder="6자리 이상 입력" required minlength="6" autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-auth-submit" id="btnAuthSubmit">
+          <span>로그인</span>
+        </button>
+      </form>
+
+      <!-- 게스트 로그인 링크 -->
+      <div class="auth-guest-wrap">
+        <button type="button" class="btn-guest-login" id="btnGuestLogin">로그인 없이 게스트로 둘러보기</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 토스트 알림 컨테이너 -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+</body>
+</html>

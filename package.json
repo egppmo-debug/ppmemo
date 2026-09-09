@@ -1,0 +1,13 @@
+{
+"scripts": {
+  "dev": "vite",
+  "build": "npx vite build",
+  "preview": "vite preview"
+},
+  "dependencies": {
+    "firebase": "^12.18.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.5"
+  }
+}
