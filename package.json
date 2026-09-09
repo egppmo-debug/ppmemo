@@ -1,7 +1,7 @@
 {
 "scripts": {
   "dev": "vite",
-  "build": "npx vite build",
+  "build": "node ./node_modules/vite/bin/vite.js build",
   "preview": "vite preview"
 },
   "dependencies": {
@@ -11,3 +11,4 @@
     "vite": "^7.1.5"
   }
 }
+
